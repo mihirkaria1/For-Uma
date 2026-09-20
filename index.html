@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daawat Cafe Model</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F3F6F4; --surface:#FFFFFF; --surface-2:#EAF0EC; --surface-3:#DEE8E1;
+    --ink:#132420; --ink-muted:#55685E; --ink-faint:#8AA096;
+    --border:#D8E3DC; --border-strong:#C3D2CA;
+    --primary:#1F5C4C; --primary-ink:#FFFFFF; --primary-soft:#E2EFE8; --primary-soft-ink:#164C3E;
+    --accent:#C3672B; --accent-soft:#F6E5D4; --accent-ink:#7A3F16;
+    --good:#256B45; --good-soft:#E1F1E6;
+    --bad:#AA3636; --bad-soft:#FAE7E7;
+    --warn:#9C6B1E; --warn-soft:#FBF0DA;
+    --shadow-sm:0 1px 2px rgba(19,36,32,0.06);
+    --shadow-md:0 6px 20px rgba(19,36,32,0.08);
+    --radius-sm:8px; --radius-md:12px; --radius-lg:18px;
+    --font-display:'Fraunces', Georgia, serif;
+    --font-body:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono','SFMono-Regular', Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1512; --surface:#151F1A; --surface-2:#1B2621; --surface-3:#233129;
+      --ink:#E6EEE9; --ink-muted:#9BB1A6; --ink-faint:#647B70;
+      --border:#293830; --border-strong:#354940;
+      --primary:#54B492; --primary-ink:#08130F; --primary-soft:#1A3329; --primary-soft-ink:#8FDABB;
+      --accent:#E3924E; --accent-soft:#3B2A19; --accent-ink:#F3C293;
+      --good:#63C78F; --good-soft:#163526;
+      --bad:#E27878; --bad-soft:#3A1E1E;
+      --warn:#E2B761; --warn-soft:#3A2E15;
+      --shadow-sm:0 1px 2px rgba(0,0,0,0.35); --shadow-md:0 10px 30px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1512; --surface:#151F1A; --surface-2:#1B2621; --surface-3:#233129;
+    --ink:#E6EEE9; --ink-muted:#9BB1A6; --ink-faint:#647B70;
+    --border:#293830; --border-strong:#354940;
+    --primary:#54B492; --primary-ink:#08130F; --primary-soft:#1A3329; --primary-soft-ink:#8FDABB;
+    --accent:#E3924E; --accent-soft:#3B2A19; --accent-ink:#F3C293;
+    --good:#63C78F; --good-soft:#163526;
+    --bad:#E27878; --bad-soft:#3A1E1E;
+    --warn:#E2B761; --warn-soft:#3A2E15;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.35); --shadow-md:0 10px 30px rgba(0,0,0,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  body{background:var(--bg); color:var(--ink); font-family:var(--font-body); line-height:1.45;}
+  h1,h2,h3{font-family:var(--font-display); font-weight:600; text-wrap:balance; margin:0;}
+  button{font-family:inherit;}
+  input,select{font-family:inherit; color:inherit;}
+  .num, .money, td.num, .tabnum{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+
+  .app{display:flex; align-items:stretch; min-height:100%;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:272px; flex:0 0 272px; background:var(--surface-2); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; gap:20px; padding:22px 16px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{display:flex; flex-direction:column; gap:2px; padding:0 4px;}
+  .brand .mark{font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--primary);}
+  .brand .sub{font-size:11.5px; color:var(--ink-muted); letter-spacing:.03em; text-transform:uppercase;}
+
+  .navlist{display:flex; flex-direction:column; gap:4px;}
+  .navbtn{
+    display:flex; align-items:center; gap:10px; text-align:left; width:100%; border:none; background:transparent;
+    color:var(--ink-muted); padding:10px 12px; border-radius:var(--radius-sm); font-size:13.5px; font-weight:500;
+    cursor:pointer; transition:background .12s ease, color .12s ease;
+  }
+  .navbtn .step{font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); width:16px; flex:0 0 16px;}
+  .navbtn:hover{background:var(--surface-3); color:var(--ink);}
+  .navbtn.active{background:var(--primary); color:var(--primary-ink);}
+  .navbtn.active .step{color:var(--primary-ink); opacity:.75;}
+
+  .snapshot{
+    margin-top:auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:14px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow-sm);
+  }
+  .snapshot h3{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); font-family:var(--font-body); font-weight:600;}
+  .snap-row{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:12.5px; color:var(--ink-muted);}
+  .snap-row span.v{font-family:var(--font-mono); font-size:13.5px; color:var(--ink); font-weight:600;}
+  .snap-row span.v.good{color:var(--good);}
+  .snap-row span.v.bad{color:var(--bad);}
+  .disclaimer{font-size:10.5px; color:var(--ink-faint); padding:0 4px; line-height:1.5;}
+
+  /* ---------- Main ---------- */
+  .content{flex:1 1 auto; min-width:0; padding:26px 34px 60px;}
+  .topbar{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:26px;}
+  .topbar h1{font-size:26px; color:var(--ink);}
+  .topbar .tagline{color:var(--ink-muted); font-size:13.5px; margin-top:4px; max-width:52ch;}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; gap:7px; border-radius:var(--radius-sm); border:1px solid var(--border-strong);
+    background:var(--surface); color:var(--ink); font-size:13px; font-weight:600; padding:9px 14px; cursor:pointer;
+    box-shadow:var(--shadow-sm); transition:transform .08s ease, box-shadow .12s ease;
+  }
+  .btn:hover{box-shadow:var(--shadow-md); transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn.primary{background:var(--primary); border-color:var(--primary); color:var(--primary-ink);}
+  .btn.accent{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:6px 10px; font-size:12px;}
+  .btn svg{width:15px; height:15px; flex:0 0 auto;}
+
+  .tab-panel{display:flex; flex-direction:column; gap:20px;}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px 22px;
+    box-shadow:var(--shadow-sm);
+  }
+  .card h2{font-size:17px; margin-bottom:2px;}
+  .card .card-sub{font-size:12.5px; color:var(--ink-muted); margin-bottom:14px;}
+  .card + .card{margin-top:0;}
+  .section-total{
+    display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:14px;
+    border-top:1px dashed var(--border-strong); font-weight:600; font-size:15px;
+  }
+  .section-total .val{font-family:var(--font-mono); font-size:19px; color:var(--primary);}
+
+  .rowlist{display:flex; flex-direction:column; gap:8px;}
+  .lineitem{
+    display:grid; grid-template-columns:1.5fr 110px 1.7fr 32px; gap:10px; align-items:center;
+    padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-2);
+  }
+  .lineitem input[type="text"]{font-weight:600; font-size:13px;}
+  .lineitem .note-field{font-size:12px; color:var(--ink-muted);}
+  .field{
+    border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); border-radius:7px;
+    padding:7px 9px; font-size:13px; width:100%;
+  }
+  .field:focus{outline:2px solid var(--primary); outline-offset:1px;}
+  .amount-field{font-family:var(--font-mono); text-align:right;}
+  .iconbtn{
+    border:none; background:transparent; color:var(--ink-faint); cursor:pointer; width:28px; height:28px;
+    display:flex; align-items:center; justify-content:center; border-radius:6px;
+  }
+  .iconbtn:hover{background:var(--bad-soft); color:var(--bad);}
+
+  .grid-2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px;}
+  .grid-5{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px;}
+  .labeled{display:flex; flex-direction:column; gap:5px;}
+  .labeled label{font-size:11.5px; font-weight:600; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.03em;}
+  .labeled .hint{font-size:11px; color:var(--ink-faint); font-weight:400; text-transform:none; letter-spacing:0;}
+  .prefix-field{position:relative;}
+  .prefix-field span{position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:13px; font-family:var(--font-mono);}
+  .prefix-field input{padding-left:20px;}
+  .suffix-field{position:relative;}
+  .suffix-field span{position:absolute; right:9px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:12px;}
+  .suffix-field input{padding-right:26px;}
+
+  table.plain{width:100%; border-collapse:collapse; font-size:13px;}
+  table.plain th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); padding:6px 8px; border-bottom:1px solid var(--border-strong);}
+  table.plain td{padding:7px 8px; border-bottom:1px solid var(--border);}
+  table.plain td.num{text-align:right;}
+  .hours-table td{vertical-align:middle;}
+  .hours-table input[type="time"]{width:112px;}
+  .time-group{display:inline-flex; align-items:center; gap:4px; white-space:nowrap;}
+  .time-group select.time-part{padding:6px 4px; font-size:12.5px; width:auto;}
+  .time-group select.time-part[data-part="hour"]{width:48px;}
+  .time-group select.time-part[data-part="minute"]{width:52px;}
+  .time-group select.time-part[data-part="ampm"]{width:58px;}
+  .daylabel{font-weight:600; font-size:12.5px;}
+  .closed-chip{font-size:10.5px; padding:2px 7px; border-radius:20px; background:var(--surface-3); color:var(--ink-faint);}
+
+  .toggle-group{display:inline-flex; border:1px solid var(--border-strong); border-radius:8px; overflow:hidden;}
+  .toggle-group button{border:none; background:var(--surface); color:var(--ink-muted); font-size:12px; font-weight:600; padding:7px 12px; cursor:pointer;}
+  .toggle-group button.active{background:var(--primary); color:var(--primary-ink);}
+
+  .statement{display:flex; flex-direction:column;}
+  .stline{display:flex; justify-content:space-between; padding:8px 2px; font-size:13.5px;}
+  .stline.sub{color:var(--ink-muted); padding-left:14px; font-size:12.5px;}
+  .stline.total{border-top:1px solid var(--border-strong); margin-top:4px; padding-top:10px; font-weight:700; font-size:15px;}
+  .stline.grand{border-top:2px solid var(--ink); margin-top:6px; padding-top:12px; font-weight:700; font-size:17px;}
+  .stline .val{font-family:var(--font-mono);}
+  .val.good{color:var(--good);} .val.bad{color:var(--bad);}
+  /* semantic state colors — apply regardless of what other classes (val, value, num, tabnum) coexist */
+  .good{color:var(--good) !important;} .bad{color:var(--bad) !important;} .warn{color:var(--warn) !important;}
+
+  .stat-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;}
+  .stat-tile{background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px;}
+  .stat-tile .label{font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-muted); font-weight:600;}
+  .stat-tile .value{font-family:var(--font-mono); font-size:20px; font-weight:600; margin-top:4px;}
+  .stat-tile.accent{background:var(--accent-soft); border-color:transparent;}
+  .stat-tile.accent .value{color:var(--accent-ink);}
+
+  .pill{display:inline-block; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px;}
+  .pill.good{background:var(--good-soft); color:var(--good);}
+  .pill.bad{background:var(--bad-soft); color:var(--bad);}
+  .pill.warn{background:var(--warn-soft); color:var(--warn);}
+
+  .grid-4{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px;}
+  .field:disabled, .field[disabled]{background:var(--surface-2); color:var(--ink-faint); cursor:not-allowed;}
+  .readonly-tile{background:var(--surface-2); border:1px dashed var(--border-strong); border-radius:var(--radius-sm); padding:10px 12px;}
+  .readonly-tile .label{font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-muted); font-weight:600;}
+  .readonly-tile .value{font-family:var(--font-mono); font-size:16px; font-weight:600; margin-top:3px;}
+
+  .radio-group{display:flex; flex-direction:column; gap:8px;}
+  .radio-option{display:flex; align-items:flex-start; gap:9px; padding:9px 11px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-2); cursor:pointer;}
+  .radio-option.disabled{opacity:.55; cursor:not-allowed;}
+  .radio-option input[type="radio"]{margin-top:2px;}
+  .radio-option .rtext{display:flex; flex-direction:column; gap:2px;}
+  .radio-option .rtext .rtitle{font-size:13px; font-weight:600; color:var(--ink);}
+  .radio-option .rtext .rval{font-family:var(--font-mono); font-size:12.5px; color:var(--ink-muted);}
+  .radio-option .rtext .rsoon{font-size:10.5px; color:var(--ink-faint); font-style:italic;}
+
+  .error-banner{display:flex; align-items:center; gap:8px; background:var(--bad-soft); color:var(--bad); border-radius:var(--radius-sm); padding:9px 12px; font-size:12.5px; font-weight:600; margin-top:10px;}
+  .cat-mix-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .cat-mix-table th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); padding:6px 8px; border-bottom:1px solid var(--border-strong);}
+  .cat-mix-table td{padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  .cat-mix-table input{width:90px;}
+  .cat-mix-table .suffix-field{width:90px;}
+  .cat-mix-table tfoot td{font-weight:700; border-top:2px solid var(--border-strong); border-bottom:none;}
+  .rent-schedule-table{width:100%; border-collapse:collapse; font-size:12px; margin-top:8px;}
+  .rent-schedule-table th{text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); padding:5px 7px; border-bottom:1px solid var(--border-strong);}
+  .rent-schedule-table td{padding:5px 7px; border-bottom:1px solid var(--border); color:var(--ink-muted);}
+
+  .menu-table-wrap{overflow-x:auto;}
+  table.menu{width:100%; border-collapse:collapse; min-width:1080px; font-size:12.5px; table-layout:fixed;}
+  table.menu th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); padding:6px 7px; border-bottom:1px solid var(--border-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  table.menu td{padding:5px 7px; border-bottom:1px solid var(--border); vertical-align:middle; overflow:hidden;}
+  table.menu input, table.menu select{padding:5px 7px; font-size:12.5px; width:100%; min-width:0;}
+  table.menu td.num-cell, table.menu th.num-cell{width:78px;}
+  table.menu tfoot td{font-weight:700; border-top:2px solid var(--border-strong); border-bottom:none;}
+  .cat-group-label{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); padding-top:12px !important;}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); opacity:0;
+    background:var(--ink); color:var(--bg); font-size:13px; font-weight:500; padding:11px 18px; border-radius:10px;
+    box-shadow:var(--shadow-md); transition:opacity .2s ease, transform .2s ease; pointer-events:none; z-index:50; max-width:min(90vw,420px); text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:860px){
+    .app{flex-direction:column;}
+    .sidebar{position:static; width:100%; flex:none; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; padding:14px 16px;}
+    .brand{flex:1 1 auto;}
+    .navlist{flex-direction:row; overflow-x:auto; flex:1 1 100%; order:3;}
+    .navbtn{white-space:nowrap; flex:0 0 auto;}
+    .snapshot{order:2; flex:1 1 auto; width:auto; margin-top:0;}
+    .disclaimer{display:none;}
+    .content{padding:20px 16px 50px;}
+    .grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr 1fr;}
+    .lineitem{grid-template-columns:1fr; }
+  }
+  @media (max-width:480px){
+    .grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr;}
+    .topbar h1{font-size:21px;}
+  }
+
+  #gate-overlay{
+    position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+    background:var(--bg); padding:20px;
+  }
+  .gate-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-md); padding:28px 26px; width:100%; max-width:360px; display:flex; flex-direction:column; gap:12px;
+  }
+  .gate-card .mark{font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--primary);}
+  .gate-card p{font-size:13.5px; color:var(--ink-muted); margin:0;}
+  .gate-error{font-size:12.5px; color:var(--bad);}
+</style>
+
+</head>
+<body>
+
+
+<!--
+  SELF-HOSTED PASSWORD GATE
+  This is a soft, client-side gate only, meant to keep casual visitors and
+  search engines out of a link they weren't given -- not to protect
+  genuinely sensitive data from a determined viewer. The password itself is
+  never stored in this file; only its SHA-256 hash is (computed with the
+  browser's built-in Web Crypto API), so a casual look at page source won't
+  hand someone the literal password the way a plaintext constant would.
+  That said, this is still obfuscation, not real security: anyone willing to
+  read this script closely, brute-force short guesses against the hash, or
+  just open the browser dev tools after unlocking it once could get past it.
+  Web Crypto's hashing only runs in a "secure context" (https:// or
+  localhost), so this gate needs the page served over HTTPS -- which GitHub
+  Pages does automatically -- to work at all.
+  The underlying app markup below is also marked `hidden` by default in the
+  HTML itself (not just visually covered by this overlay), and is only
+  revealed by this script after a correct password or an existing unlock --
+  so the page's content isn't sitting in the DOM for a casual "view source"
+  or a script that runs before the gate does.
+  To change the password: open a browser console anywhere and run
+  crypto.subtle.digest("SHA-256", new TextEncoder().encode("yourNewPassword"))
+  .then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("")))
+  then paste the resulting hex string in as GATE_HASH below.
+-->
+<div id="gate-overlay">
+  <div class="gate-card">
+    <div class="mark">Daawat Cafe</div>
+    <p>Enter the password to open this operating model.</p>
+    <input type="password" id="gate-password" class="field" placeholder="Password" autocomplete="off">
+    <button type="button" class="btn primary" id="gate-submit">Unlock</button>
+    <div class="gate-error" id="gate-error" hidden>Incorrect password -- try again.</div>
+  </div>
+</div>
+<script>
+(function(){
+  // SHA-256 hash of the real password -- not the password itself.
+  var GATE_HASH = "4e0561f4009846b26d2b0f0b757930660445e40dc0699013b0030d88fb52697f";
+  var GATE_LS_KEY = "daawat-gate-unlocked";
+
+  function sha256Hex(str){
+    var data = new TextEncoder().encode(str);
+    return crypto.subtle.digest("SHA-256", data).then(function(buf){
+      return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,"0"); }).join("");
+    });
+  }
+
+  var overlay = document.getElementById("gate-overlay");
+  var input = document.getElementById("gate-password");
+  var errorEl = document.getElementById("gate-error");
+  var submitBtn = document.getElementById("gate-submit");
+
+  function revealApp(){
+    var app = document.querySelector(".app");
+    if(app) app.hidden = false;
+    overlay.hidden = true;
+  }
+
+  // The .app element is parsed later in the document than this script, so
+  // querying for it here (before DOMContentLoaded) would silently find
+  // nothing and leave the page stuck behind the overlay on every reload.
+  // Defer the automatic-unlock check until the DOM is ready; it still runs
+  // before the user can see or interact with anything meaningful.
+  document.addEventListener("DOMContentLoaded", function(){
+    try{
+      if(localStorage.getItem(GATE_LS_KEY) === "1"){ revealApp(); }
+    }catch(e){}
+  });
+
+  function attemptUnlock(){
+    if(!(window.crypto && window.crypto.subtle)){
+      errorEl.textContent = "This browser/connection can't verify the password securely (Web Crypto needs HTTPS). Try a modern browser over an https:// link.";
+      errorEl.hidden = false;
+      return;
+    }
+    submitBtn.disabled = true;
+    sha256Hex(input.value || "").then(function(hex){
+      submitBtn.disabled = false;
+      if(hex === GATE_HASH){
+        try{ localStorage.setItem(GATE_LS_KEY, "1"); }catch(e){}
+        revealApp();
+      } else {
+        errorEl.textContent = "Incorrect password -- try again.";
+        errorEl.hidden = false;
+        input.value = "";
+        input.focus();
+      }
+    }).catch(function(){
+      submitBtn.disabled = false;
+      errorEl.textContent = "Could not verify the password in this browser.";
+      errorEl.hidden = false;
+    });
+  }
+
+  submitBtn.addEventListener("click", attemptUnlock);
+  input.addEventListener("keydown", function(e){ if(e.key === "Enter") attemptUnlock(); });
+})();
+</script>
+
+<div class="app" hidden>
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="mark">Daawat Cafe</div>
+      <div class="sub">Operating Model</div>
+    </div>
+    <div class="navlist" role="tablist">
+      <button class="navbtn active" data-tab="tab-pre" role="tab"><span class="step">01</span>Pre-Opening Costs</button>
+      <button class="navbtn" data-tab="tab-fixed" role="tab"><span class="step">02</span>Fixed Monthly Costs</button>
+      <button class="navbtn" data-tab="tab-monthly" role="tab"><span class="step">03</span>12M Revenue &amp; Variable Costs</button>
+      <button class="navbtn" data-tab="tab-summary" role="tab"><span class="step">04</span>12M - P&amp;L &amp; Break-Even</button>
+      <button class="navbtn" data-tab="tab-menu" role="tab"><span class="step">05</span>Menu &amp; Pricing</button>
+    </div>
+    <div class="snapshot">
+      <h3>Live Snapshot</h3>
+      <div class="snap-row"><span>Pre-opening investment</span><span class="v" data-calc="totalPreOpening">$0</span></div>
+      <div class="snap-row"><span>Fixed cost / month</span><span class="v" data-calc="totalFixedMonthly">$0</span></div>
+      <div class="snap-row"><span>Break-even revenue</span><span class="v" data-calc="breakEvenRevenue">$0</span></div>
+      <div class="snap-row"><span>Net income / month</span><span class="v" id="snap-net" data-calc="netOperatingIncome">$0</span></div>
+    </div>
+    <div class="disclaimer">Defaults are planning estimates from industry benchmarks and Addison, IL market data — replace with your real quotes. Not accounting, tax or legal advice.</div>
+  </nav>
+
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1>Daawat Cafe — Operating Model Calculator</h1>
+        <div class="tagline">Pre-opening budget, fixed &amp; variable costs, monthly P&amp;L, break-even and menu pricing for a 1,600 sq ft Arabic coffee &amp; bubble tea cafe in Addison, IL.</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="btn-export">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Export to Excel
+        </button>
+        <button class="btn ghost" id="btn-import">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M5 3h14"/></svg>
+          Import from Excel
+        </button>
+        <input type="file" id="import-file" accept=".xlsx" hidden>
+      </div>
+    </div>
+
+    <!-- TAB 1: PRE-OPENING -->
+    <section class="tab-panel" id="tab-pre">
+      <div class="card">
+        <h2>Grand Opening &amp; Lease</h2>
+        <div class="card-sub">Sets the date the lease clock stops running pre-opening rent, and shows the rent schedule your landlord quoted.</div>
+        <div class="grid-2">
+          <div class="labeled"><label>Grand Opening Date</label>
+            <input class="field" type="date" data-bind="grandOpeningDate" id="in-opening-date">
+            <span class="hint">Lease is assumed to start 5/1/2026 — rent accrues from then until this date</span>
+          </div>
+        </div>
+        <table class="rent-schedule-table">
+          <thead><tr><th>Lease Period</th><th>Monthly Rent</th></tr></thead>
+          <tbody>
+            <tr><td>5/1/2026 – 11/30/2026</td><td class="num">$3,700</td></tr>
+            <tr><td>12/1/2026 – 11/30/2027</td><td class="num">$3,800</td></tr>
+            <tr><td>12/1/2027 – 11/30/2028</td><td class="num">$3,900</td></tr>
+            <tr><td>Security deposit</td><td class="num">$3,700</td></tr>
+          </tbody>
+        </table>
+        <div class="stat-row" style="margin-top:14px;">
+          <div class="stat-tile"><div class="label">Prorated rent through opening</div><div class="value" data-calc="preOpeningRentProrated">$0</div></div>
+          <div class="stat-tile"><div class="label">Security deposit</div><div class="value" data-calc="preOpeningSecurityDeposit">$3,700</div></div>
+          <div class="stat-tile accent"><div class="label">Total rent + deposit (pre-opening)</div><div class="value" data-calc="preOpeningRentTotal">$0</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Pre-Opening (One-Time) Costs</h2>
+        <div class="card-sub">Everything spent before day one of operations. Edit any label, amount or note — figures are pre-filled with typical ranges for a full 1,600 sq ft build-out. Rent &amp; security deposit are calculated automatically above from the lease schedule and grand opening date, and are included in the total below.</div>
+        <div class="rowlist" id="preopening-list"></div>
+        <button class="btn small ghost" data-action="add-preopening" style="margin-top:10px;">+ Add line item</button>
+        <div class="section-total"><span>Rent + Security Deposit (from above)</span><span class="val" data-calc="preOpeningRentTotal" style="font-size:15px;">$0</span></div>
+        <div class="section-total"><span>Total Pre-Opening Investment</span><span class="val" data-calc="totalPreOpening">$0</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Loan Financing</h2>
+        <div class="card-sub">Model a loan against your pre-opening investment. The monthly payment calculated here feeds the 12-Month P&amp;L and Owner's Equity figures.</div>
+        <div class="grid-4">
+          <div class="labeled"><label>Loan Amount</label>
+            <div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="500" data-bind="loan.amount" id="in-loan-amount"></div>
+          </div>
+          <div class="labeled"><label>Interest Rate</label>
+            <div class="suffix-field"><input class="field amount-field" type="number" step="0.1" data-bind="loan.rate" id="in-loan-rate"><span>%</span></div>
+          </div>
+          <div class="labeled"><label>Loan Term</label>
+            <div class="suffix-field"><input class="field amount-field" type="number" step="1" data-bind="loan.termYears" id="in-loan-term"><span>yrs</span></div>
+          </div>
+          <div class="labeled"><label>Monthly Payment</label>
+            <div class="readonly-tile"><div class="value" data-calc="loanMonthlyPayment" style="margin-top:0;">$0</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: FIXED MONTHLY -->
+    <section class="tab-panel" id="tab-fixed" hidden>
+      <div class="card">
+        <div class="section-total" style="border-top:none; padding-top:0;">
+          <span style="font-size:16px;">Total Fixed Monthly Costs</span>
+          <span class="val" data-calc="totalFixedMonthly" style="font-size:22px;">$0</span>
+        </div>
+        <div class="card-sub" style="margin-top:6px;">Rent, utilities, insurance, officer salaries, software and other recurring monthly overhead — everything on this tab. (Hourly staff labor is modeled separately on the 12M Revenue &amp; Variable Costs tab.)</div>
+      </div>
+
+      <div class="card">
+        <h2>Rent, Utilities &amp; Insurance</h2>
+        <div class="card-sub">Recurring monthly costs that don't move with sales volume.</div>
+        <div class="grid-3">
+          <div class="labeled"><label>Monthly Rent</label>
+            <div class="readonly-tile"><div class="value" data-calc="currentRent" style="margin-top:0;">$0</div></div>
+            <span class="hint">Follows the lease rent schedule (Pre-Opening tab) as of your Grand Opening Date — includes the $100/yr escalation starting 12/1/26</span>
+          </div>
+          <div class="labeled"><label>Insurance (monthly)</label>
+            <div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.insurance" id="in-insurance"></div>
+            <span class="hint">General liability + property + workers' comp</span>
+          </div>
+          <div class="labeled"><label>Software &amp; Subscriptions</label>
+            <div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.software" id="in-software"></div>
+            <span class="hint">POS, accounting, scheduling, WiFi/music</span>
+          </div>
+        </div>
+        <h3 style="font-size:13px; margin:18px 0 8px; color:var(--ink-muted); font-family:var(--font-body); font-weight:600;">Utilities (broken down)</h3>
+        <div class="grid-5">
+          <div class="labeled"><label>Electricity</label><div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.utilities.electricity"></div></div>
+          <div class="labeled"><label>Gas</label><div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.utilities.gas"></div></div>
+          <div class="labeled"><label>Water / Sewer</label><div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.utilities.water"></div></div>
+          <div class="labeled"><label>Trash</label><div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.utilities.trash"></div></div>
+          <div class="labeled"><label>Internet / Phone</label><div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.utilities.internet"></div></div>
+        </div>
+        <div class="section-total"><span>Total Utilities</span><span class="val" data-calc="utilitiesTotal" style="font-size:15px;">$0</span></div>
+        <div class="section-total"><span>Section Total — Rent + Utilities + Insurance</span><span class="val" data-calc="rentUtilInsTotal" style="font-size:17px;">$0</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Operating Hours</h2>
+        <div class="card-sub">Sets how many days you're open — used to translate daily labor hours into a weekly total.</div>
+        <div style="overflow-x:auto;">
+        <table class="plain hours-table" id="hours-table"></table>
+        </div>
+        <div class="stat-row" style="margin-top:14px;">
+          <div class="stat-tile"><div class="label">Days open / week</div><div class="value" data-calc="openDays">0</div></div>
+          <div class="stat-tile"><div class="label">Total hours / week</div><div class="value" data-calc="totalWeeklyHours">0</div></div>
+          <div class="stat-tile"><div class="label">Total hours / month</div><div class="value" data-calc="totalMonthlyHours">0</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Officer Salaries</h2>
+        <div class="card-sub">Monthly draws for owners/managers — distinct from hourly staff labor, which is now modeled on the 12M Revenue &amp; Variable Costs tab.</div>
+        <div class="grid-2">
+          <div class="labeled"><label>Officer Salary 1 (per month)</label>
+            <div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.officerSalary1" id="in-officer1"></div>
+            <span class="hint">Monthly draw, if an owner/manager works in the business</span>
+          </div>
+          <div class="labeled"><label>Officer Salary 2 (per month)</label>
+            <div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="fixed.officerSalary2" id="in-officer2"></div>
+            <span class="hint">Second owner/manager, if applicable</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Other Fixed Monthly Costs</h2>
+        <div class="card-sub">Typical recurring cafe overhead not captured above.</div>
+        <div class="rowlist" id="fixedother-list"></div>
+        <button class="btn small ghost" data-action="add-fixedother" style="margin-top:10px;">+ Add line item</button>
+        <div class="section-total"><span>Total Other Fixed Costs</span><span class="val" data-calc="fixedOtherTotal" style="font-size:15px;">$0</span></div>
+      </div>
+    </section>
+
+
+    <!-- TAB 5: 12M REVENUE & VARIABLE COSTS -->
+    <section class="tab-panel" id="tab-monthly" hidden>
+      <div class="card">
+        <h2>12-Month Revenue &amp; Variable Costs Plan</h2>
+        <div class="card-sub">Edit revenue and labor hours month by month to model your ramp-up. Fixed monthly costs stay exactly as set on the Fixed Monthly Costs tab — only revenue, labor hours and the variable cost assumptions below change here.</div>
+        <div class="grid-2">
+          <div class="labeled"><label>Labor Hourly Cost</label>
+            <div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="0.25" data-bind="rev12.laborHourlyCost" id="in-rev12-wage"></div>
+            <span class="hint">Blended hourly wage; applied to each month's labor hours below. Modeled as its own line, separate from COGS.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>COGS Calculator</h2>
+        <div class="card-sub">Choose which raw-materials (COGS) percentage of revenue drives the monthly plan below. Consumables and merchant/card fees are grouped here with COGS as variable costs — labor is modeled separately above.</div>
+        <div class="grid-3">
+          <div class="labeled"><label>Industry Standard Blended %</label>
+            <div class="suffix-field"><input class="field amount-field" type="number" step="0.1" data-bind="rev12.cogsIndustryPct" id="in-cogs-industry"><span>%</span></div>
+          </div>
+          <div class="labeled"><label>Category-Specific Blended %</label>
+            <div class="readonly-tile"><div class="value" data-calc="categoryBlendedCogsPct" style="margin-top:0;">0%</div></div>
+            <span class="hint">From the Menu &amp; Pricing category mix, weighted by % of sales</span>
+          </div>
+          <div class="labeled"><label>Menu Item-Based %</label>
+            <div class="readonly-tile" style="opacity:.55;"><div class="value" data-calc="menuItemBlendedCogsPct" style="margin-top:0;">0%</div></div>
+            <span class="hint">Coming soon — weighted average of each menu item's actual food cost %</span>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:14px;">
+          <div class="labeled"><label>Consumables</label>
+            <div class="suffix-field"><input class="field amount-field" type="number" step="0.1" data-bind="rev12.consumablesPct"><span>%</span></div>
+            <span class="hint">% of revenue — plates, cups, napkins, etc.</span>
+          </div>
+          <div class="labeled"><label>Merchant / Card Fees</label>
+            <div class="suffix-field"><input class="field amount-field" type="number" step="0.1" data-bind="rev12.merchantFeePct"><span>%</span></div>
+            <span class="hint">% of revenue</span>
+          </div>
+        </div>
+        <div class="radio-group" style="margin-top:14px;">
+          <label class="radio-option">
+            <input type="radio" name="cogsMethod" data-bind="rev12.cogsMethod" value="industry" id="radio-cogs-industry">
+            <span class="rtext"><span class="rtitle">Use Industry Standard Blended Percentage</span><span class="rval">Default</span></span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="cogsMethod" data-bind="rev12.cogsMethod" value="category" id="radio-cogs-category">
+            <span class="rtext"><span class="rtitle">Use Category-Specific Blended Percentage</span><span class="rval">Calculated from Menu tab</span></span>
+          </label>
+          <label class="radio-option disabled">
+            <input type="radio" name="cogsMethod" data-bind="rev12.cogsMethod" value="menu" id="radio-cogs-menu" disabled>
+            <span class="rtext"><span class="rtitle">Use Real Menu Calculation</span><span class="rsoon">Not yet available</span></span>
+          </label>
+        </div>
+        <div class="stat-row" style="margin-top:14px;">
+          <div class="stat-tile accent"><div class="label">Effective COGS % in use</div><div class="value" data-calc="rev12EffectiveCogsPct">0%</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Monthly Plan</h2>
+        <div style="overflow-x:auto;">
+          <table class="plain" id="monthly-table">
+            <thead><tr><th>Month</th><th>Monthly Revenue</th><th>Labor Hours / Week</th><th>Labor Cost / Month</th><th>Daily Revenue</th><th>Daily Transactions</th></tr></thead>
+            <tbody id="monthly-tbody"></tbody>
+            <tfoot><tr><td>Total (12 months)</td><td class="num tabnum" data-calc="totalRevenue12">$0</td><td></td><td></td><td></td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div class="card-sub" style="margin-top:10px;">Daily transactions assume an average of $8 per transaction.</div>
+      </div>
+    </section>
+
+    <!-- TAB 6: 12-MONTH SUMMARY -->
+    <section class="tab-panel" id="tab-summary" hidden>
+      <div class="card">
+        <h2>Owner's Equity &amp; Financing</h2>
+        <div class="card-sub">Owner's Equity = Total Pre-Opening Costs − Loan Amount (both set on the Pre-Opening Costs tab).</div>
+        <div class="stat-row">
+          <div class="stat-tile"><div class="label">Total pre-opening costs</div><div class="value" data-calc="totalPreOpening">$0</div></div>
+          <div class="stat-tile"><div class="label">Loan amount</div><div class="value" data-calc="loanAmount">$0</div></div>
+          <div class="stat-tile accent"><div class="label">Owner's Equity</div><div class="value" id="owners-equity-val" data-calc="ownersEquity">$0</div></div>
+          <div class="stat-tile"><div class="label">Monthly loan payment</div><div class="value" data-calc="loanMonthlyPayment">$0</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Monthly Income Statement</h2>
+        <div class="card-sub">Full income statement for each of the 12 months, using that revenue and labor plan against the fixed costs and margins set elsewhere in this model, including the loan payment requirement.</div>
+        <div style="overflow-x:auto;">
+          <table class="plain" id="summary-table">
+            <thead><tr><th>Month</th><th>Revenue</th><th>Variable Costs</th><th>Fixed Costs</th><th>Labor Cost</th><th>Total Costs</th><th>Net Profit / (Loss)</th><th>Loan Payment</th><th>Net Cash Flow (after Loan)</th></tr></thead>
+            <tbody id="summary-tbody"></tbody>
+            <tfoot>
+              <tr>
+                <td>Total (12 months)</td>
+                <td class="num tabnum" data-calc="totalRevenue12">$0</td>
+                <td colspan="3"></td>
+                <td class="num tabnum" data-calc="totalCost12">$0</td>
+                <td class="num tabnum" id="summary-net-total" data-calc="cumulativeNet12">$0</td>
+                <td class="num tabnum" data-calc="totalLoanPayment12">$0</td>
+                <td class="num tabnum" id="summary-cashflow-total" data-calc="cumulativeNetCashFlow12">$0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Break-Even — Sales &amp; Transactions Needed</h2>
+        <div class="card-sub">Total sales and transaction count needed to break even, by day, week and month — based on total fixed costs (including the baseline labor estimate) and the blended variable cost % from the COGS Calculator on the 12M Revenue &amp; Variable Costs tab. Transaction counts assume the same $8-per-transaction average used elsewhere in this model.</div>
+        <div style="overflow-x:auto;">
+          <table class="plain">
+            <thead><tr><th></th><th>Break-Even Sales</th><th>Break-Even Transactions</th></tr></thead>
+            <tbody>
+              <tr><td class="daylabel">Per Day</td><td class="num tabnum" data-calc="breakEvenRevenueDay">$0</td><td class="num tabnum" data-calc="breakEvenTxnDay">0</td></tr>
+              <tr><td class="daylabel">Per Week</td><td class="num tabnum" data-calc="breakEvenRevenueWeek">$0</td><td class="num tabnum" data-calc="breakEvenTxnWeek">0</td></tr>
+              <tr><td class="daylabel">Per Month</td><td class="num tabnum" data-calc="breakEvenRevenue">$0</td><td class="num tabnum" data-calc="breakEvenTxnMonth">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Cash In Hand Needed</h2>
+        <div class="card-sub">The total shortfall across these 12 months after loan payments — cash you should have on hand, beyond your pre-opening investment, to cover the ramp-up period. If your 12-month total (after debt service) is profitable overall, this shows $0. Use it to sanity-check the Working Capital Reserve line on the Pre-Opening Costs tab.</div>
+        <div class="stat-row">
+          <div class="stat-tile accent" style="grid-column:1/-1; text-align:center;">
+            <div class="label">Cash In Hand Needed</div>
+            <div class="value" id="cash-needed-val" data-calc="cashInHandNeeded" style="font-size:30px;">$0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 7: MENU -->
+    <section class="tab-panel" id="tab-menu" hidden>
+      <div class="card">
+        <h2>Menu Categories, Costs and Sales</h2>
+        <div class="card-sub">Set the raw-materials (COGS) percentage and expected share of total sales for each category. Add your own categories as needed — they'll also become selectable for individual menu items below.</div>
+        <div style="overflow-x:auto;">
+          <table class="cat-mix-table" id="menu-categories-table">
+            <thead><tr><th>Category</th><th>COGS – Raw Materials</th><th>% of Total Sales</th><th style="width:34px;"></th></tr></thead>
+            <tbody id="menu-categories-tbody"></tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td><td></td>
+                <td class="num tabnum" data-calc="salesPctSum">0%</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div id="menu-cat-error" class="error-banner" hidden>Percentage of Sales must total 100% — currently <span data-calc="salesPctSum">0%</span>.</div>
+        <button class="btn small ghost" data-action="add-category" style="margin-top:12px;">+ Add Category</button>
+        <button class="btn small primary" data-action="save-menu-categories" style="margin-top:12px;">Save all Categories</button>
+      </div>
+
+      <div class="card">
+        <h2>Menu &amp; Item-Level Pricing</h2>
+        <div class="card-sub">Price, raw cost and consumables cost per item. Add an est. monthly quantity to cross-check against your revenue assumption.</div>
+        <div class="menu-table-wrap">
+          <table class="menu" id="menu-table">
+            <thead>
+              <tr>
+                <th style="width:190px;">Item</th>
+                <th style="width:150px;">Category</th>
+                <th class="num-cell">Price</th>
+                <th class="num-cell">Raw cost</th>
+                <th class="num-cell">Consum.</th>
+                <th class="num-cell">Item cost</th>
+                <th class="num-cell">Gr. profit</th>
+                <th class="num-cell">Margin %</th>
+                <th class="num-cell">Food cost %</th>
+                <th style="width:96px;">Est. qty/mo</th>
+                <th class="num-cell">Est. revenue</th>
+                <th style="width:34px;"></th>
+              </tr>
+            </thead>
+            <tbody id="menu-tbody"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="10">Total estimated monthly revenue from menu</td>
+                <td class="num tabnum" data-calc="menuTotalEstRevenue">$0</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <button class="btn small ghost" data-action="add-menu" style="margin-top:12px;">+ Add menu item</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  var CATEGORIES = ["Hot Beverages","Cold Beverages","Bubble Tea","Bottled & Canned","Ice Cream","Pastries & Snacks","Other"];
+  var LS_KEY = "daawat-cafe-model-v2";
+  var LS_KEY_LEGACY = "daawat-cafe-model-v1";
+
+  // Rent schedule (Pre-Opening tab): lease is assumed to start 5/1/2026;
+  // rent is prorated at rate/30 per day from lease start through the grand
+  // opening date, plus a flat security deposit.
+  var LEASE_START_ISO = "2026-05-01";
+  var RENT_SCHEDULE = [
+    {start:"2026-05-01", end:"2026-11-30", rate:3700},
+    {start:"2026-12-01", end:"2027-11-30", rate:3800},
+    {start:"2027-12-01", end:"2028-11-30", rate:3900}
+  ];
+  var SECURITY_DEPOSIT = 3700;
+  function parseISODate(s){
+    var p = String(s||"").split("-");
+    var y = parseInt(p[0],10), mo = parseInt(p[1],10), da = parseInt(p[2],10);
+    if(!y || !mo || !da) return NaN;
+    return Date.UTC(y, mo-1, da);
+  }
+  function computePreOpeningRent(openingDateStr){
+    var leaseStart = parseISODate(LEASE_START_ISO);
+    var opening = parseISODate(openingDateStr);
+    if(!isFinite(opening) || opening <= leaseStart) return 0;
+    var total = 0;
+    RENT_SCHEDULE.forEach(function(tier){
+      var tierStart = parseISODate(tier.start);
+      var tierEnd = parseISODate(tier.end) + 86400000; // exclusive end (tier.end is the last included day)
+      var periodStart = Math.max(tierStart, leaseStart);
+      var periodEnd = Math.min(tierEnd, opening);
+      if(periodEnd > periodStart){
+        var days = Math.round((periodEnd - periodStart) / 86400000);
+        total += (tier.rate/30) * days;
+      }
+    });
+    return total;
+  }
+  // Returns the single rent-schedule tier rate in effect as of a given date
+  // (used for the Fixed Monthly Costs tab's now-uneditable Monthly Rent,
+  // referenced against the Grand Opening Date). Extrapolates a further
+  // $100/year escalation, matching the schedule's own pattern, for dates
+  // beyond the last quoted tier.
+  function currentRentForDate(dateStr){
+    var d = parseISODate(dateStr);
+    if(!isFinite(d)) return RENT_SCHEDULE[0].rate;
+    for(var i=0;i<RENT_SCHEDULE.length;i++){
+      var tier = RENT_SCHEDULE[i];
+      var tStart = parseISODate(tier.start), tEnd = parseISODate(tier.end);
+      if(d >= tStart && d <= tEnd) return tier.rate;
+    }
+    if(d < parseISODate(RENT_SCHEDULE[0].start)) return RENT_SCHEDULE[0].rate;
+    var last = RENT_SCHEDULE[RENT_SCHEDULE.length-1];
+    var lastEnd = parseISODate(last.end);
+    var yearsPast = Math.floor((d - lastEnd) / (365*86400000)) + 1;
+    return last.rate + 100*yearsPast;
+  }
+
+  function uid(prefix){ return prefix + "_" + Math.random().toString(36).slice(2,9); }
+
+  function defaultState(){
+    return {
+      grandOpeningDate: "2026-12-15",
+      loan: {amount:100000, rate:10, termYears:7},
+      preOpening: [
+        {id:uid("pe"), label:"Permits & Inspections", amount:3800, note:"Village of Addison business license, DuPage County Health Dept. food permit, fire/occupancy inspection, signage permit"},
+        {id:uid("pe"), label:"Architectural & Design", amount:6000, note:"Space planning, kitchen & equipment layout, permit drawings"},
+        {id:uid("pe"), label:"FF&E — POS & Small Wares", amount:8000, note:"Point-of-sale system, smallwares, misc. equipment not itemized below"},
+        {id:uid("pe"), label:"Furniture", amount:14000, note:"Tables, chairs, bar stools, banquettes for ~1,600 sq ft dine-in area"},
+        {id:uid("pe"), label:"Equipment", amount:42000, note:"Espresso machine, grinders, brewers, blenders, ice cream freezer, bubble tea equipment, refrigeration, ice machine"},
+        {id:uid("pe"), label:"Fixtures", amount:9000, note:"Service counter, back-bar shelving, display cases, menu boards"},
+        {id:uid("pe"), label:"Construction Supplies", amount:12000, note:"General buildout materials (drywall, flooring, plumbing/electrical rough-in)"},
+        {id:uid("pe"), label:"Fixtures & Lighting Supplies (F&LS)", amount:6500, note:"Electrical fixtures, ambient & task lighting, signage lighting"},
+        {id:uid("pe"), label:"Construction Labor", amount:28000, note:"Contractor labor for buildout"},
+        {id:uid("pe"), label:"Marketing (Pre-Opening)", amount:5000, note:"Signage, website, social media launch, opening event, local ads"},
+        {id:uid("pe"), label:"Initial Operating Supplies", amount:6000, note:"Starting inventory: beans/tea, cups, lids, napkins, cleaning supplies"},
+        {id:uid("pe"), label:"Utilities (Setup & Deposits)", amount:1500, note:"Utility connection fees and deposits"},
+        {id:uid("pe"), label:"Travel", amount:1500, note:"Site visits, vendor/supplier sourcing, trade shows"},
+        {id:uid("pe"), label:"Insurance (Initial Premium)", amount:2500, note:"First general liability + property insurance premium"},
+        {id:uid("pe"), label:"Other Typical Cafe Expenses", amount:4000, note:"Legal & accounting setup, business formation, misc."},
+        {id:uid("pe"), label:"Working Capital Reserve", amount:25000, note:"Recommended reserve (~3 months of fixed costs) to cover the ramp-up period"}
+      ],
+      fixed: {
+        utilities: {electricity:900, gas:350, water:200, trash:250, internet:200},
+        insurance: 350,
+        hours: [
+          {open:"06:00", close:"19:00", closed:false},
+          {open:"06:00", close:"19:00", closed:false},
+          {open:"06:00", close:"19:00", closed:false},
+          {open:"06:00", close:"19:00", closed:false},
+          {open:"06:00", close:"19:00", closed:false},
+          {open:"07:00", close:"19:00", closed:false},
+          {open:"07:00", close:"17:00", closed:false}
+        ],
+        officerSalary1: 4500,
+        officerSalary2: 0,
+        software: 250,
+        other: [
+          {id:uid("fo"), label:"Marketing (Ongoing)", amount:500},
+          {id:uid("fo"), label:"Accounting & Bookkeeping", amount:300},
+          {id:uid("fo"), label:"Pest Control", amount:100},
+          {id:uid("fo"), label:"Music Licensing", amount:50},
+          {id:uid("fo"), label:"Maintenance & Repairs", amount:300},
+          {id:uid("fo"), label:"Permit & License Renewal (amortized)", amount:80},
+          {id:uid("fo"), label:"Miscellaneous", amount:200}
+        ]
+      },
+      rev12: {
+        laborHourlyCost: 16.5,
+        cogsIndustryPct: 26,
+        cogsMethod: "industry",
+        consumablesPct: 6,
+        merchantFeePct: 2.6
+      },
+      categories: CATEGORIES.slice(),
+      menuCategories: {
+        "Hot Beverages": {rawPct:18, salesPct:35},
+        "Cold Beverages": {rawPct:21, salesPct:20},
+        "Bubble Tea": {rawPct:30, salesPct:15},
+        "Bottled & Canned": {rawPct:30, salesPct:8},
+        "Ice Cream": {rawPct:25, salesPct:7},
+        "Pastries & Snacks": {rawPct:35, salesPct:13},
+        "Other": {rawPct:26, salesPct:2}
+      },
+      menu: [
+        {id:uid("mi"), category:"Hot Beverages", name:"Arabic Coffee (Qahwa)", price:4.50, rawCost:0.65, consumables:0.25, qty:730},
+        {id:uid("mi"), category:"Hot Beverages", name:"Turkish Coffee", price:4.75, rawCost:0.70, consumables:0.25, qty:470},
+        {id:uid("mi"), category:"Hot Beverages", name:"Karak Chai (Spiced Tea)", price:4.25, rawCost:0.55, consumables:0.25, qty:570},
+        {id:uid("mi"), category:"Hot Beverages", name:"Espresso", price:3.25, rawCost:0.45, consumables:0.15, qty:260},
+        {id:uid("mi"), category:"Hot Beverages", name:"Cappuccino / Latte", price:5.25, rawCost:0.85, consumables:0.30, qty:680},
+        {id:uid("mi"), category:"Hot Beverages", name:"Hot Chocolate", price:4.75, rawCost:0.80, consumables:0.30, qty:210},
+        {id:uid("mi"), category:"Cold Beverages", name:"Iced Arabic Coffee", price:5.25, rawCost:0.70, consumables:0.35, qty:360},
+        {id:uid("mi"), category:"Cold Beverages", name:"Iced Latte", price:5.75, rawCost:0.95, consumables:0.35, qty:420},
+        {id:uid("mi"), category:"Cold Beverages", name:"Cold Brew", price:5.50, rawCost:0.80, consumables:0.35, qty:260},
+        {id:uid("mi"), category:"Bubble Tea", name:"Classic Milk Tea Bubble Tea", price:6.25, rawCost:1.10, consumables:0.45, qty:310},
+        {id:uid("mi"), category:"Bubble Tea", name:"Taro Bubble Tea", price:6.50, rawCost:1.20, consumables:0.45, qty:210},
+        {id:uid("mi"), category:"Bubble Tea", name:"Mango Bubble Tea", price:6.50, rawCost:1.15, consumables:0.45, qty:210},
+        {id:uid("mi"), category:"Bottled & Canned", name:"Bottled Water", price:2.25, rawCost:0.55, consumables:0.05, qty:310},
+        {id:uid("mi"), category:"Bottled & Canned", name:"Canned Soda", price:2.75, rawCost:0.70, consumables:0.05, qty:260},
+        {id:uid("mi"), category:"Bottled & Canned", name:"Bottled Juice", price:3.75, rawCost:1.40, consumables:0.05, qty:160},
+        {id:uid("mi"), category:"Ice Cream", name:"Ice Cream Scoop", price:3.75, rawCost:0.95, consumables:0.20, qty:180},
+        {id:uid("mi"), category:"Ice Cream", name:"Ice Cream Sundae", price:6.25, rawCost:1.75, consumables:0.35, qty:100},
+        {id:uid("mi"), category:"Pastries & Snacks", name:"Croissant / Pastry", price:3.95, rawCost:1.35, consumables:0.15, qty:310},
+        {id:uid("mi"), category:"Pastries & Snacks", name:"Baklava (2 pc)", price:4.50, rawCost:1.50, consumables:0.15, qty:210},
+        {id:uid("mi"), category:"Pastries & Snacks", name:"Warmed Savory Snack", price:4.75, rawCost:1.65, consumables:0.20, qty:160}
+      ],
+      monthly: {
+        revenue: [15000, 18000, 21000, 24000, 26000, 28000, 29000, 30000, 30000, 30000, 30000, 30000],
+        laborHours: [110, 120, 130, 140, 145, 150, 150, 150, 150, 150, 150, 150]
+      }
+    };
+  }
+
+  var state = defaultState();
+
+  // ---------------- persistence (per-viewer convenience only) ----------------
+  function saveLocal(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function loadLocal(){
+    try{
+      var raw = localStorage.getItem(LS_KEY) || localStorage.getItem(LS_KEY_LEGACY);
+      if(!raw) return null;
+      var parsed = JSON.parse(raw);
+      if(parsed && parsed.preOpening && parsed.fixed && parsed.menu){
+        migrateState(parsed);
+        return parsed;
+      }
+    }catch(e){}
+    return null;
+  }
+  // one-time shape migration for state saved by earlier versions of this page
+  function migrateState(s){
+    var d0 = defaultState();
+    if(s.fixed && s.fixed.officerSalary !== undefined && s.fixed.officerSalary1 === undefined){
+      s.fixed.officerSalary1 = s.fixed.officerSalary;
+      s.fixed.officerSalary2 = 0;
+      delete s.fixed.officerSalary;
+    }
+    if(s.fixed && s.fixed.officerSalary1 === undefined) s.fixed.officerSalary1 = 0;
+    if(s.fixed && s.fixed.officerSalary2 === undefined) s.fixed.officerSalary2 = 0;
+    if(!s.monthly || !Array.isArray(s.monthly.revenue) || s.monthly.revenue.length !== 12 ||
+       !Array.isArray(s.monthly.laborHours) || s.monthly.laborHours.length !== 12){
+      s.monthly = d0.monthly;
+    }
+    if(!s.grandOpeningDate) s.grandOpeningDate = d0.grandOpeningDate;
+    if(!s.loan) s.loan = d0.loan;
+    if(!s.rev12){
+      s.rev12 = d0.rev12;
+      if(s.fixed && s.fixed.labor && s.fixed.labor.wage !== undefined) s.rev12.laborHourlyCost = s.fixed.labor.wage;
+    }
+    if(s.fixed && s.fixed.labor) delete s.fixed.labor;
+    if(!s.menuCategories) s.menuCategories = d0.menuCategories;
+    if(!Array.isArray(s.categories) || !s.categories.length){
+      s.categories = s.menuCategories ? Object.keys(s.menuCategories) : d0.categories.slice();
+    }
+    // drop legacy rent line item from preOpening (now calculated separately)
+    if(Array.isArray(s.preOpening)){
+      s.preOpening = s.preOpening.filter(function(i){ return !/^Rent \(Deposit/.test(i.label||""); });
+    }
+    // rent is now fully calculated from the lease schedule (Fixed Monthly Costs
+    // tab is no longer editable for it) — drop any legacy editable value
+    if(s.fixed) delete s.fixed.rent;
+    // 1M-model tabs were removed; all functionality now lives on the 12M tabs
+    delete s.revenue;
+    delete s.financing;
+    return s;
+  }
+
+  // ---------------- formatting ----------------
+  function fmtCurrency(v, decimals){
+    decimals = decimals || 0;
+    var n = Number(v); if(!isFinite(n)) n = 0;
+    var sign = n < 0 ? "-" : "";
+    return sign + "$" + Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+  }
+  function fmtPercent(v, decimals){
+    decimals = (decimals === undefined) ? 1 : decimals;
+    var n = Number(v); if(!isFinite(n)) n = 0;
+    return n.toFixed(decimals) + "%";
+  }
+  function fmtNum(v, decimals){
+    decimals = decimals || 0;
+    var n = Number(v); if(!isFinite(n)) n = 0;
+    return n.toLocaleString("en-US",{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+  }
+  function toast(msg){
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ el.classList.remove("show"); }, 3200);
+  }
+
+  // ---------------- rendering: line-item lists ----------------
+  function renderLineItems(containerId, list, bindPrefix){
+    var html = list.map(function(item){
+      return '<div class="lineitem">' +
+        '<input class="field" type="text" data-bind="'+bindPrefix+'.'+item.id+'.label" value="'+escapeAttr(item.label)+'">' +
+        '<div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="1" data-bind="'+bindPrefix+'.'+item.id+'.amount" value="'+item.amount+'"></div>' +
+        '<input class="field note-field" type="text" placeholder="Notes" data-bind="'+bindPrefix+'.'+item.id+'.note" value="'+escapeAttr(item.note||"")+'">' +
+        '<button class="iconbtn" data-action="remove-'+bindPrefix+'" data-id="'+item.id+'" title="Remove" aria-label="Remove line item">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>' +
+        '</button>' +
+      '</div>';
+    }).join("");
+    document.getElementById(containerId).innerHTML = html;
+  }
+  function escapeAttr(s){
+    return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+  }
+
+  function renderPreOpening(){ renderLineItems("preopening-list", state.preOpening, "preOpening"); }
+  function renderFixedOther(){ renderLineItems("fixedother-list", state.fixed.other, "fixedOther"); }
+
+  // Native <input type="time"> has an easy-to-mis-click segmented UI (hour /
+  // minute / AM-PM share tiny hit targets and vary by browser), which was
+  // producing wrong open/close values without any obvious sign something had
+  // changed. Explicit dropdowns remove that ambiguity entirely.
+  var MINUTE_OPTIONS = [0, 15, 30, 45];
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function timePartsFromValue(v){
+    var mins = parseTime(v);
+    var hh = Math.floor(mins / 60), mm = mins % 60;
+    var ampm = hh < 12 ? "AM" : "PM";
+    var hour12 = hh % 12; if(hour12 === 0) hour12 = 12;
+    return {hour12:hour12, minute:mm, ampm:ampm};
+  }
+  function timePartsToValue(hour12, minute, ampm){
+    var hh;
+    if(ampm === "AM"){ hh = (hour12 === 12) ? 0 : hour12; }
+    else { hh = (hour12 === 12) ? 12 : hour12 + 12; }
+    return pad2(hh) + ":" + pad2(minute);
+  }
+  function timeSelectHtml(rowIdx, field, part, parts, disabled){
+    var opts;
+    if(part === "hour"){
+      opts = [];
+      for(var h=1; h<=12; h++) opts.push({v:h, label:String(h)});
+    } else if(part === "minute"){
+      var mins = MINUTE_OPTIONS.slice();
+      if(mins.indexOf(parts.minute) === -1){ mins.push(parts.minute); mins.sort(function(a,b){return a-b;}); }
+      opts = mins.map(function(m){ return {v:m, label:pad2(m)}; });
+    } else {
+      opts = [{v:"AM", label:"AM"}, {v:"PM", label:"PM"}];
+    }
+    var current = part === "hour" ? parts.hour12 : (part === "minute" ? parts.minute : parts.ampm);
+    var optionsHtml = opts.map(function(o){
+      return '<option value="'+o.v+'" '+(String(o.v)===String(current)?"selected":"")+'>'+o.label+'</option>';
+    }).join("");
+    return '<select class="field time-part" data-row="'+rowIdx+'" data-field="'+field+'" data-part="'+part+'" '+(disabled?"disabled":"")+'>'+optionsHtml+'</select>';
+  }
+  function renderHoursTable(){
+    var rows = state.fixed.hours.map(function(h, i){
+      var op = timePartsFromValue(h.open), cp = timePartsFromValue(h.close);
+      return '<tr data-day-row="'+i+'">' +
+        '<td class="daylabel">'+DAY_NAMES[i]+'</td>' +
+        '<td><div class="time-group">'+
+          timeSelectHtml(i,"open","hour",op,h.closed)+':'+
+          timeSelectHtml(i,"open","minute",op,h.closed)+
+          timeSelectHtml(i,"open","ampm",op,h.closed)+
+        '</div></td>' +
+        '<td>to</td>' +
+        '<td><div class="time-group">'+
+          timeSelectHtml(i,"close","hour",cp,h.closed)+':'+
+          timeSelectHtml(i,"close","minute",cp,h.closed)+
+          timeSelectHtml(i,"close","ampm",cp,h.closed)+
+        '</div></td>' +
+        '<td><label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-muted);"><input type="checkbox" data-bind="hours.'+i+'.closed" '+(h.closed?"checked":"")+'> Closed</label></td>' +
+        '<td class="num tabnum" data-calc="dayHours_'+i+'">0 hrs</td>' +
+      '</tr>';
+    }).join("");
+    document.getElementById("hours-table").innerHTML =
+      '<thead><tr><th>Day</th><th>Open</th><th></th><th>Close</th><th></th><th>Hours</th></tr></thead><tbody>'+rows+'</tbody>';
+  }
+  function handleTimePartChange(e){
+    var el = e.target;
+    if(!el.classList || !el.classList.contains("time-part")) return;
+    var idx = parseInt(el.dataset.row,10);
+    var field = el.dataset.field;
+    var rowEl = el.closest("tr");
+    var hourSel = rowEl.querySelector('select[data-field="'+field+'"][data-part="hour"]');
+    var minSel = rowEl.querySelector('select[data-field="'+field+'"][data-part="minute"]');
+    var ampmSel = rowEl.querySelector('select[data-field="'+field+'"][data-part="ampm"]');
+    var value = timePartsToValue(parseInt(hourSel.value,10), parseInt(minSel.value,10), ampmSel.value);
+    state.fixed.hours[idx][field] = value;
+    saveLocal();
+    updateCalculatedFields();
+  }
+  document.addEventListener("change", handleTimePartChange);
+
+  function renderMenuCategories(){
+    var rows = state.categories.map(function(cat){
+      var c = state.menuCategories[cat] || {rawPct:0, salesPct:0};
+      var safeCat = escapeAttr(cat);
+      return '<tr>' +
+        '<td>'+escapeAttr(cat)+'</td>' +
+        '<td class="num-cell"><div class="suffix-field"><input class="field amount-field" type="number" step="0.5" data-bind="menuCategories.'+safeCat+'.rawPct" value="'+c.rawPct+'"><span>%</span></div></td>' +
+        '<td class="num-cell"><div class="suffix-field"><input class="field amount-field" type="number" step="0.5" data-bind="menuCategories.'+safeCat+'.salesPct" value="'+c.salesPct+'"><span>%</span></div></td>' +
+        '<td><button class="iconbtn" data-action="remove-category" data-cat="'+safeCat+'" title="Remove category" aria-label="Remove category">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>' +
+        '</button></td>' +
+      '</tr>';
+    }).join("");
+    document.getElementById("menu-categories-tbody").innerHTML = rows;
+  }
+
+  function renderMenu(){
+    var rows = state.menu.map(function(item){
+      var opts = state.categories.map(function(c){
+        return '<option value="'+escapeAttr(c)+'" '+(c===item.category?"selected":"")+'>'+c+'</option>';
+      }).join("");
+      return '<tr>' +
+        '<td><input class="field" type="text" data-bind="menu.'+item.id+'.name" value="'+escapeAttr(item.name)+'"></td>' +
+        '<td><select class="field" data-bind="menu.'+item.id+'.category">'+opts+'</select></td>' +
+        '<td class="num-cell"><input class="field amount-field" type="number" step="0.05" data-bind="menu.'+item.id+'.price" value="'+item.price+'"></td>' +
+        '<td class="num-cell"><input class="field amount-field" type="number" step="0.05" data-bind="menu.'+item.id+'.rawCost" value="'+item.rawCost+'"></td>' +
+        '<td class="num-cell"><input class="field amount-field" type="number" step="0.05" data-bind="menu.'+item.id+'.consumables" value="'+item.consumables+'"></td>' +
+        '<td class="num tabnum" data-calc="menuItemCost_'+item.id+'">$0.00</td>' +
+        '<td class="num tabnum" data-calc="menuGrossProfit_'+item.id+'">$0.00</td>' +
+        '<td class="num tabnum" data-calc="menuMarginPct_'+item.id+'">0%</td>' +
+        '<td class="num tabnum" data-calc="menuFoodCostPct_'+item.id+'">0%</td>' +
+        '<td class="num-cell"><input class="field amount-field" type="number" step="10" data-bind="menu.'+item.id+'.qty" value="'+(item.qty||0)+'"></td>' +
+        '<td class="num tabnum" data-calc="menuEstRevenue_'+item.id+'">$0</td>' +
+        '<td><button class="iconbtn" data-action="remove-menu" data-id="'+item.id+'" title="Remove item" aria-label="Remove item"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg></button></td>' +
+      '</tr>';
+    }).join("");
+    document.getElementById("menu-tbody").innerHTML = rows;
+  }
+
+  function renderMonthlyTable(){
+    var rows = state.monthly.revenue.map(function(rev, i){
+      var hrs = state.monthly.laborHours[i];
+      return '<tr>' +
+        '<td class="daylabel">Month '+(i+1)+'</td>' +
+        '<td class="num-cell" style="width:150px;"><div class="prefix-field"><span>$</span><input class="field amount-field" type="number" step="100" data-bind="monthly.revenue.'+i+'" value="'+rev+'"></div></td>' +
+        '<td class="num-cell" style="width:150px;"><input class="field amount-field" type="number" step="5" data-bind="monthly.laborHours.'+i+'" value="'+hrs+'"></td>' +
+        '<td class="num tabnum" data-calc="monthLaborCost_'+i+'">$0</td>' +
+        '<td class="num tabnum" data-calc="monthDailyRevenue_'+i+'">$0</td>' +
+        '<td class="num tabnum" data-calc="monthDailyTxns_'+i+'">0</td>' +
+      '</tr>';
+    }).join("");
+    document.getElementById("monthly-tbody").innerHTML = rows;
+  }
+
+  function renderSummaryTable(){
+    var rows = [];
+    for(var i=0;i<12;i++){
+      rows.push('<tr>' +
+        '<td class="daylabel">Month '+(i+1)+'</td>' +
+        '<td class="num tabnum" data-calc="monthRevenue_'+i+'">$0</td>' +
+        '<td class="num tabnum" data-calc="monthVariableCost_'+i+'">$0</td>' +
+        '<td class="num tabnum" data-calc="monthFixedCost_'+i+'">$0</td>' +
+        '<td class="num tabnum" data-calc="monthLaborCost_'+i+'">$0</td>' +
+        '<td class="num tabnum" data-calc="monthTotalCost_'+i+'">$0</td>' +
+        '<td class="num tabnum" id="month-net-'+i+'" data-calc="monthNet_'+i+'">$0</td>' +
+        '<td class="num tabnum" data-calc="monthLoanPayment_'+i+'">$0</td>' +
+        '<td class="num tabnum" id="month-cashflow-'+i+'" data-calc="monthNetCashFlow_'+i+'">$0</td>' +
+      '</tr>');
+    }
+    document.getElementById("summary-tbody").innerHTML = rows.join("");
+  }
+
+  function renderAll(){
+    renderPreOpening();
+    renderFixedOther();
+    renderHoursTable();
+    renderMenuCategories();
+    renderMenu();
+    renderMonthlyTable();
+    renderSummaryTable();
+    setScalarInputs();
+  }
+
+  function setScalarInputs(){
+    setVal("grandOpeningDate", state.grandOpeningDate);
+    setVal("loan.amount", state.loan.amount);
+    setVal("loan.rate", state.loan.rate);
+    setVal("loan.termYears", state.loan.termYears);
+    setVal("fixed.insurance", state.fixed.insurance);
+    setVal("fixed.software", state.fixed.software);
+    setVal("fixed.utilities.electricity", state.fixed.utilities.electricity);
+    setVal("fixed.utilities.gas", state.fixed.utilities.gas);
+    setVal("fixed.utilities.water", state.fixed.utilities.water);
+    setVal("fixed.utilities.trash", state.fixed.utilities.trash);
+    setVal("fixed.utilities.internet", state.fixed.utilities.internet);
+    setVal("fixed.officerSalary1", state.fixed.officerSalary1);
+    setVal("fixed.officerSalary2", state.fixed.officerSalary2);
+    setVal("rev12.laborHourlyCost", state.rev12.laborHourlyCost);
+    setVal("rev12.cogsIndustryPct", state.rev12.cogsIndustryPct);
+    setVal("rev12.consumablesPct", state.rev12.consumablesPct);
+    setVal("rev12.merchantFeePct", state.rev12.merchantFeePct);
+    var radio = document.querySelector('input[name="cogsMethod"][value="'+state.rev12.cogsMethod+'"]');
+    if(radio) radio.checked = true;
+  }
+  function setVal(bind, value){
+    var el = document.querySelector('[data-bind="'+bind+'"]');
+    if(el) el.value = value;
+  }
+
+  // ---------------- calculations ----------------
+  function dayHours(h){
+    if(h.closed) return 0;
+    var o = parseTime(h.open), c = parseTime(h.close);
+    var diff = (c - o) / 60;
+    return diff > 0 ? diff : 0;
+  }
+  function parseTime(t){
+    if(!t) return 0;
+    var parts = t.split(":");
+    return (parseInt(parts[0],10)||0) * 60 + (parseInt(parts[1],10)||0);
+  }
+
+  function computeDerived(){
+    var d = {};
+
+    // ---- Pre-opening rent schedule + loan ----
+    d.preOpeningRentProrated = computePreOpeningRent(state.grandOpeningDate);
+    d.preOpeningSecurityDeposit = SECURITY_DEPOSIT;
+    d.preOpeningRentTotal = d.preOpeningRentProrated + SECURITY_DEPOSIT;
+
+    var preOpeningLineItems = state.preOpening.reduce(function(s,i){ return s + (Number(i.amount)||0); }, 0);
+    d.totalPreOpening = preOpeningLineItems + d.preOpeningRentTotal;
+
+    var loanAmount = Number(state.loan.amount)||0;
+    var loanAnnualRate = Number(state.loan.rate)||0;
+    var loanTermYears = Number(state.loan.termYears)||0;
+    var ln = loanTermYears*12;
+    var lr = loanAnnualRate/100/12;
+    var loanPayment = 0;
+    if(ln > 0){
+      loanPayment = lr > 0 ? (loanAmount * lr) / (1 - Math.pow(1+lr, -ln)) : loanAmount/ln;
+    }
+    d.loanAmount = loanAmount;
+    d.loanMonthlyPayment = loanPayment;
+    d.ownersEquity = d.totalPreOpening - loanAmount;
+
+    var u = state.fixed.utilities;
+    d.utilitiesTotal = (Number(u.electricity)||0)+(Number(u.gas)||0)+(Number(u.water)||0)+(Number(u.trash)||0)+(Number(u.internet)||0);
+
+    var openDays = state.fixed.hours.filter(function(h){ return !h.closed; }).length;
+    d.openDays = openDays;
+    d.weeklyOpenHours = state.fixed.hours.reduce(function(s,h){ return s + dayHours(h); }, 0);
+    d.totalWeeklyHours = d.weeklyOpenHours;
+    d.totalMonthlyHours = d.weeklyOpenHours * 4.33;
+    state.fixed.hours.forEach(function(h,i){ d["dayHours_"+i] = dayHours(h); });
+
+    // Baseline labor estimate for the 1-month Fixed Costs total, using the
+    // 12M tab's labor hourly cost against total scheduled weekly hours.
+    // Month-by-month labor in the 12-month plan below uses each month's own
+    // labor hours instead.
+    var wage = Number(state.rev12.laborHourlyCost)||0;
+    d.laborMonthlyCost = wage * d.weeklyOpenHours * 4.33;
+
+    d.fixedOtherTotal = state.fixed.other.reduce(function(s,i){ return s + (Number(i.amount)||0); }, 0);
+
+    // Monthly Rent is no longer editable — it follows the lease rent schedule
+    // (Pre-Opening tab) as of the Grand Opening Date, including the $100/yr
+    // escalation baked into that schedule starting 12/1/26.
+    d.currentRent = currentRentForDate(state.grandOpeningDate);
+
+    d.rentUtilInsTotal = d.currentRent + d.utilitiesTotal + (Number(state.fixed.insurance)||0);
+
+    var officerTotal = (Number(state.fixed.officerSalary1)||0) + (Number(state.fixed.officerSalary2)||0);
+    d.totalFixedMonthly = d.currentRent + d.utilitiesTotal + (Number(state.fixed.insurance)||0) +
+      officerTotal + (Number(state.fixed.software)||0) + d.fixedOtherTotal;
+    d.totalFixedMonthlyNeg = -d.totalFixedMonthly;
+
+    // ---- Menu item stats (unchanged) + menu item-based blended COGS % ----
+    var menuTotalEstRevenue = 0;
+    var qtyWeightedFoodCostSum = 0, qtySum = 0;
+    state.menu.forEach(function(item){
+      var price = Number(item.price)||0, raw = Number(item.rawCost)||0, cons = Number(item.consumables)||0;
+      var cost = raw + cons;
+      var profit = price - cost;
+      var marginPct = price > 0 ? (profit/price*100) : 0;
+      var foodCostPct = price > 0 ? (raw/price*100) : 0;
+      var qty = Number(item.qty)||0;
+      var estRev = qty > 0 ? price*qty : 0;
+      menuTotalEstRevenue += estRev;
+      qtyWeightedFoodCostSum += foodCostPct * qty;
+      qtySum += qty;
+      d["menuItemCost_"+item.id] = cost;
+      d["menuGrossProfit_"+item.id] = profit;
+      d["menuMarginPct_"+item.id] = marginPct;
+      d["menuFoodCostPct_"+item.id] = foodCostPct;
+      d["menuEstRevenue_"+item.id] = estRev;
+    });
+    d.menuTotalEstRevenue = menuTotalEstRevenue;
+    d.menuItemBlendedCogsPct = qtySum > 0 ? (qtyWeightedFoodCostSum/qtySum) : 0;
+
+    // ---- Menu category mix ----
+    var salesPctSum = 0, categoryBlendedCogsPct = 0;
+    state.categories.forEach(function(cat){
+      var c = state.menuCategories[cat] || {rawPct:0, salesPct:0};
+      var rawPct = Number(c.rawPct)||0, salesPct = Number(c.salesPct)||0;
+      salesPctSum += salesPct;
+      categoryBlendedCogsPct += rawPct * salesPct / 100;
+    });
+    d.salesPctSum = salesPctSum;
+    d.categoryBlendedCogsPct = categoryBlendedCogsPct;
+
+    var cogsIndustryPct = Number(state.rev12.cogsIndustryPct)||0;
+    var rev12EffectiveCogsPct;
+    if(state.rev12.cogsMethod === "category") rev12EffectiveCogsPct = categoryBlendedCogsPct;
+    else if(state.rev12.cogsMethod === "menu") rev12EffectiveCogsPct = d.menuItemBlendedCogsPct;
+    else rev12EffectiveCogsPct = cogsIndustryPct;
+    d.rev12EffectiveCogsPct = rev12EffectiveCogsPct;
+
+    // ---- 12-month plan — fixed costs (labor-free) stay constant; revenue,
+    // labor hours, COGS/consumables/merchant-fee % (from the COGS Calculator
+    // above) and the loan payment all drive each month's net cash flow. ----
+    var nonLaborFixed = d.totalFixedMonthly;
+    d.nonLaborFixed = nonLaborFixed;
+    var rev12VariablePctDecimal = (rev12EffectiveCogsPct + (Number(state.rev12.consumablesPct)||0) + (Number(state.rev12.merchantFeePct)||0)) / 100;
+
+    // ---- Break-even — sales $ and transaction counts needed per day, week
+    // and month, using the 12-month plan's own fixed-cost base (incl. the
+    // baseline labor estimate above) and blended variable cost %, with the
+    // same $8/transaction assumption used elsewhere on the 12M Revenue tab. ----
+    var totalFixedPlusLabor = nonLaborFixed + d.laborMonthlyCost;
+    d.breakEvenRevenue = rev12VariablePctDecimal < 1 ? totalFixedPlusLabor / (1 - rev12VariablePctDecimal) : NaN;
+    d.breakEvenRevenueWeek = d.breakEvenRevenue / 4.33;
+    d.breakEvenRevenueDay = d.breakEvenRevenue / 30;
+    d.breakEvenTxnMonth = isFinite(d.breakEvenRevenue) ? d.breakEvenRevenue / 8 : 0;
+    d.breakEvenTxnWeek = isFinite(d.breakEvenRevenueWeek) ? d.breakEvenRevenueWeek / 8 : 0;
+    d.breakEvenTxnDay = isFinite(d.breakEvenRevenueDay) ? d.breakEvenRevenueDay / 8 : 0;
+
+    var totalRevenue12 = 0, totalCost12 = 0, cumulativeNet12 = 0, cumulativeNetCashFlow12 = 0, totalLoanPayment12 = 0;
+    for(var m=0;m<12;m++){
+      var mRev = Number(state.monthly.revenue[m])||0;
+      var mHours = Number(state.monthly.laborHours[m])||0;
+      var mLabor = wage * mHours * 4.33;
+      var mVar = mRev * rev12VariablePctDecimal;
+      var mTotalCost = nonLaborFixed + mLabor + mVar;
+      var mNet = mRev - mTotalCost;
+      var mCashFlow = mNet - loanPayment;
+      var mDailyRevenue = mRev / 30;
+      totalRevenue12 += mRev;
+      totalCost12 += mTotalCost;
+      cumulativeNet12 += mNet;
+      cumulativeNetCashFlow12 += mCashFlow;
+      totalLoanPayment12 += loanPayment;
+      d["monthRevenue_"+m] = mRev;
+      d["monthLaborCost_"+m] = mLabor;
+      d["monthVariableCost_"+m] = mVar;
+      d["monthFixedCost_"+m] = nonLaborFixed;
+      d["monthTotalCost_"+m] = mTotalCost;
+      d["monthNet_"+m] = mNet;
+      d["monthLoanPayment_"+m] = loanPayment;
+      d["monthNetCashFlow_"+m] = mCashFlow;
+      d["monthDailyRevenue_"+m] = mDailyRevenue;
+      d["monthDailyTxns_"+m] = mDailyRevenue / 8;
+    }
+    d.totalRevenue12 = totalRevenue12;
+    d.totalCost12 = totalCost12;
+    d.cumulativeNet12 = cumulativeNet12;
+    d.totalLoanPayment12 = totalLoanPayment12;
+    d.cumulativeNetCashFlow12 = cumulativeNetCashFlow12;
+    d.cashInHandNeeded = cumulativeNetCashFlow12 < 0 ? -cumulativeNetCashFlow12 : 0;
+
+    // Net income / month — now that the 1M tabs are gone, this represents
+    // the average monthly net operating income across the 12-month plan
+    // (before loan payments), i.e. cumulative 12-month net profit / 12.
+    d.netOperatingIncome = cumulativeNet12 / 12;
+
+    return d;
+  }
+
+  var FORMAT_MAP = {
+    totalPreOpening:"currency0", utilitiesTotal:"currency0", rentUtilInsTotal:"currency0", openDays:"num0", weeklyOpenHours:"hours",
+    totalWeeklyHours:"hours", totalMonthlyHours:"hours", currentRent:"currency0",
+    laborMonthlyCost:"currency0", fixedOtherTotal:"currency0", totalFixedMonthly:"currency0",
+    totalFixedMonthlyNeg:"currencySigned0",
+    netOperatingIncome:"currencySigned0", breakEvenRevenue:"currency0",
+    breakEvenRevenueWeek:"currency0", breakEvenRevenueDay:"currency0",
+    breakEvenTxnMonth:"num0", breakEvenTxnWeek:"num0", breakEvenTxnDay:"num0", menuTotalEstRevenue:"currency0",
+    loanAmount:"currency0", loanMonthlyPayment:"currency0", ownersEquity:"currencySigned0",
+    preOpeningRentProrated:"currency0", preOpeningSecurityDeposit:"currency0", preOpeningRentTotal:"currency0",
+    categoryBlendedCogsPct:"percent1", menuItemBlendedCogsPct:"percent1", rev12EffectiveCogsPct:"percent1",
+    salesPctSum:"percent1",
+    nonLaborFixed:"currency0", totalRevenue12:"currency0", totalCost12:"currency0", cumulativeNet12:"currencySigned0",
+    totalLoanPayment12:"currency0", cumulativeNetCashFlow12:"currencySigned0",
+    cashInHandNeeded:"currency0"
+  };
+
+  function formatValue(key, val, kind){
+    if(kind === undefined) kind = FORMAT_MAP[key];
+    switch(kind){
+      case "currency0": return fmtCurrency(val,0);
+      case "currency2": return fmtCurrency(val,2);
+      case "currencySigned0": return fmtCurrency(val,0);
+      case "percent1": return fmtPercent(val,1);
+      case "num0": return fmtNum(val,0);
+      case "hours": return fmtNum(val,1) + " hrs";
+      case "months1": return isFinite(val) ? fmtNum(val,1)+" mo" : "— mo";
+      default: return String(val);
+    }
+  }
+
+  function updateCalculatedFields(){
+    var d = computeDerived();
+    document.querySelectorAll("[data-calc]").forEach(function(el){
+      var key = el.dataset.calc;
+      if(!(key in d)) return;
+      var kind = FORMAT_MAP[key];
+      if(!kind){
+        if(/^menuItemCost_/.test(key) || /^menuGrossProfit_/.test(key) || /^menuEstRevenue_/.test(key)) kind = "currency2";
+        else if(/^menuMarginPct_/.test(key) || /^menuFoodCostPct_/.test(key)) kind = "percent1";
+        else if(/^dayHours_/.test(key)) kind = "hours";
+        else if(/^monthDailyRevenue_/.test(key) || /^monthLoanPayment_/.test(key)) kind = "currency0";
+        else if(/^monthDailyTxns_/.test(key)) kind = "num0";
+        else if(/^monthRevenue_/.test(key) || /^monthLaborCost_/.test(key) || /^monthVariableCost_/.test(key) ||
+                /^monthFixedCost_/.test(key) || /^monthTotalCost_/.test(key)) kind = "currency0";
+        else if(/^monthNet_/.test(key) || /^monthNetCashFlow_/.test(key)) kind = "currencySigned0";
+      }
+      el.textContent = formatValue(key, d[key], kind);
+    });
+    // conditional coloring
+    colorize("snap-net", d.netOperatingIncome);
+    colorize("owners-equity-val", d.ownersEquity);
+    for(var m=0;m<12;m++){ colorize("month-net-"+m, d["monthNet_"+m]); colorize("month-cashflow-"+m, d["monthNetCashFlow_"+m]); }
+    colorize("summary-net-total", d.cumulativeNet12);
+    colorize("summary-cashflow-total", d.cumulativeNetCashFlow12);
+    colorizeCashNeeded("cash-needed-val", d.cashInHandNeeded);
+    var pctOk = Math.abs(d.salesPctSum - 100) < 0.05;
+    var errBox = document.getElementById("menu-cat-error");
+    if(errBox) errBox.hidden = pctOk;
+    return d;
+  }
+  function colorizeCashNeeded(id, val){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.classList.remove("good","bad");
+    el.classList.add(val > 0 ? "bad" : "good");
+  }
+  function colorize(id, val){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.classList.remove("good","bad");
+    el.classList.add(val >= 0 ? "good" : "bad");
+  }
+  // ---------------- state mutation ----------------
+  function setNested(obj, path, value){
+    var o = obj;
+    for(var i=0;i<path.length-1;i++){ o = o[path[i]]; if(!o) return; }
+    o[path[path.length-1]] = value;
+  }
+
+  function handleInputEvent(e){
+    var el = e.target;
+    var bind = el.dataset.bind;
+    if(!bind) return;
+    var parts = bind.split(".");
+    var raw;
+    if(el.type === "checkbox") raw = el.checked;
+    else if(el.type === "radio"){ if(!el.checked) return; raw = el.value; }
+    else if(el.type === "number") raw = parseFloat(el.value);
+    else raw = el.value;
+    if(el.type === "number" && isNaN(raw)) raw = 0;
+
+    if(parts[0] === "fixed"){
+      setNested(state.fixed, parts.slice(1), raw);
+    } else if(parts[0] === "rev12"){
+      setNested(state.rev12, parts.slice(1), raw);
+    } else if(parts[0] === "loan"){
+      setNested(state.loan, parts.slice(1), raw);
+    } else if(parts[0] === "menuCategories"){
+      var cat = parts[1], catField = parts[2];
+      if(state.menuCategories[cat]) state.menuCategories[cat][catField] = raw;
+    } else if(parts[0] === "hours"){
+      var idx = parseInt(parts[1],10);
+      state.fixed.hours[idx][parts[2]] = raw;
+      if(parts[2] === "closed"){
+        var row = document.querySelector('[data-day-row="'+idx+'"]');
+        if(row){
+          row.querySelectorAll('select.time-part').forEach(function(t){ t.disabled = !!raw; });
+        }
+      }
+    } else if(parts[0] === "preOpening"){
+      var pItem = state.preOpening.find(function(i){ return i.id === parts[1]; });
+      if(pItem) pItem[parts[2]] = raw;
+    } else if(parts[0] === "fixedOther"){
+      var fItem = state.fixed.other.find(function(i){ return i.id === parts[1]; });
+      if(fItem) fItem[parts[2]] = raw;
+    } else if(parts[0] === "menu"){
+      var mItem = state.menu.find(function(i){ return i.id === parts[1]; });
+      if(mItem) mItem[parts[2]] = raw;
+    } else if(parts[0] === "monthly"){
+      var mField = parts[1];
+      var mIdx = parseInt(parts[2],10);
+      if(state.monthly[mField] && mIdx >= 0 && mIdx < 12) state.monthly[mField][mIdx] = raw;
+    } else if(parts.length === 1){
+      state[parts[0]] = raw;
+    }
+    saveLocal();
+    updateCalculatedFields();
+  }
+
+  function handleClick(e){
+    var navBtn = e.target.closest(".navbtn");
+    if(navBtn){ switchTab(navBtn.dataset.tab); return; }
+
+    var actionEl = e.target.closest("[data-action]");
+    if(!actionEl) return;
+    var action = actionEl.dataset.action;
+    if(action === "add-preopening"){
+      state.preOpening.push({id:uid("pe"), label:"New line item", amount:0, note:""});
+      renderPreOpening(); saveLocal(); updateCalculatedFields();
+    } else if(action === "remove-preOpening"){
+      state.preOpening = state.preOpening.filter(function(i){ return i.id !== actionEl.dataset.id; });
+      renderPreOpening(); saveLocal(); updateCalculatedFields();
+    } else if(action === "add-fixedother"){
+      state.fixed.other.push({id:uid("fo"), label:"New fixed cost", amount:0});
+      renderFixedOther(); saveLocal(); updateCalculatedFields();
+    } else if(action === "remove-fixedOther"){
+      state.fixed.other = state.fixed.other.filter(function(i){ return i.id !== actionEl.dataset.id; });
+      renderFixedOther(); saveLocal(); updateCalculatedFields();
+    } else if(action === "add-menu"){
+      state.menu.push({id:uid("mi"), category:"Other", name:"New item", price:0, rawCost:0, consumables:0, qty:0});
+      renderMenu(); saveLocal(); updateCalculatedFields();
+    } else if(action === "remove-menu"){
+      state.menu = state.menu.filter(function(i){ return i.id !== actionEl.dataset.id; });
+      renderMenu(); saveLocal(); updateCalculatedFields();
+    } else if(action === "add-category"){
+      var newCatName = window.prompt("New category name:", "");
+      if(newCatName !== null){
+        newCatName = newCatName.trim();
+        if(!newCatName){
+          // no-op on blank input
+        } else if(state.categories.indexOf(newCatName) !== -1){
+          toast("That category already exists.");
+        } else {
+          state.categories.push(newCatName);
+          state.menuCategories[newCatName] = {rawPct:0, salesPct:0};
+          renderMenuCategories(); renderMenu(); saveLocal(); updateCalculatedFields();
+        }
+      }
+    } else if(action === "remove-category"){
+      var catToRemove = actionEl.dataset.cat;
+      state.categories = state.categories.filter(function(c){ return c !== catToRemove; });
+      delete state.menuCategories[catToRemove];
+      state.menu.forEach(function(item){ if(item.category === catToRemove) item.category = "Other"; });
+      renderMenuCategories(); renderMenu(); saveLocal(); updateCalculatedFields();
+    } else if(action === "save-menu-categories"){
+      saveLocal(); updateCalculatedFields();
+      var d = computeDerived();
+      if(Math.abs(d.salesPctSum - 100) < 0.05) toast("All categories saved.");
+      else toast("Saved — but % of Total Sales totals " + d.salesPctSum.toFixed(1) + "%, not 100%.");
+    }
+  }
+
+  function switchTab(tabId){
+    document.querySelectorAll(".tab-panel").forEach(function(p){ p.hidden = (p.id !== tabId); });
+    document.querySelectorAll(".navbtn").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === tabId); });
+    try{ sessionStorage.setItem("daawat-active-tab", tabId); }catch(e){}
+    window.scrollTo(0,0);
+  }
+
+  document.addEventListener("input", handleInputEvent);
+  document.addEventListener("change", handleInputEvent);
+  document.addEventListener("click", handleClick);
+
+  // ---------------- Excel export ----------------
+  function buildWorkbook(){
+    var wb = XLSX.utils.book_new();
+    var d = computeDerived();
+
+    var preRows = state.preOpening.map(function(i){ return {Label:i.label, Amount:i.amount, Note:i.note||""}; });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(preRows), "PreOpening");
+
+    var openingFields = [
+      {Field:"grandOpeningDate", Value: state.grandOpeningDate},
+      {Field:"loan.amount", Value: state.loan.amount},
+      {Field:"loan.rate", Value: state.loan.rate},
+      {Field:"loan.termYears", Value: state.loan.termYears}
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(openingFields), "PreOpening_Lease_Loan");
+
+    var mainFields = [
+      {Field:"rent (calculated from lease schedule)", Value: d.currentRent},
+      {Field:"utilities.electricity", Value: state.fixed.utilities.electricity},
+      {Field:"utilities.gas", Value: state.fixed.utilities.gas},
+      {Field:"utilities.water", Value: state.fixed.utilities.water},
+      {Field:"utilities.trash", Value: state.fixed.utilities.trash},
+      {Field:"utilities.internet", Value: state.fixed.utilities.internet},
+      {Field:"insurance", Value: state.fixed.insurance},
+      {Field:"officerSalary1", Value: state.fixed.officerSalary1},
+      {Field:"officerSalary2", Value: state.fixed.officerSalary2},
+      {Field:"software", Value: state.fixed.software}
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mainFields), "FixedCosts_Main");
+
+    var hoursRows = state.fixed.hours.map(function(h,i){ return {Day:DAY_NAMES[i], Open:h.open, Close:h.close, Closed: h.closed ? "TRUE":"FALSE"}; });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hoursRows), "FixedCosts_Hours");
+
+    var otherRows = state.fixed.other.map(function(i){ return {Label:i.label, Amount:i.amount}; });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(otherRows), "FixedCosts_Other");
+
+    var rev12Rows = [
+      {Field:"laborHourlyCost", Value: state.rev12.laborHourlyCost},
+      {Field:"cogsIndustryPct", Value: state.rev12.cogsIndustryPct},
+      {Field:"cogsMethod", Value: state.rev12.cogsMethod},
+      {Field:"consumablesPct", Value: state.rev12.consumablesPct},
+      {Field:"merchantFeePct", Value: state.rev12.merchantFeePct}
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rev12Rows), "Rev12_COGS");
+
+    var catRows = state.categories.map(function(cat){
+      var c = state.menuCategories[cat] || {rawPct:0, salesPct:0};
+      return {Category:cat, RawMaterialsPct:c.rawPct, PercentageOfSales:c.salesPct};
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(catRows), "MenuCategoryMix");
+
+    var menuRows = state.menu.map(function(i){
+      return {Category:i.category, Item:i.name, Price:i.price, RawCost:i.rawCost, Consumables:i.consumables, EstMonthlyQty:i.qty||0};
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(menuRows), "Menu");
+
+    var monthlyRows = state.monthly.revenue.map(function(rev, i){
+      return {Month:"Month "+(i+1), Revenue:rev, LaborHoursPerWeek:state.monthly.laborHours[i]};
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monthlyRows), "MonthlyPlan");
+
+    var summaryRows = [];
+    for(var mi=0; mi<12; mi++){
+      summaryRows.push({
+        Month:"Month "+(mi+1), Revenue:d["monthRevenue_"+mi], VariableCosts:d["monthVariableCost_"+mi],
+        FixedCosts:d["monthFixedCost_"+mi], LaborCost:d["monthLaborCost_"+mi], TotalCosts:d["monthTotalCost_"+mi],
+        NetProfitLoss:d["monthNet_"+mi], LoanPayment:d["monthLoanPayment_"+mi], NetCashFlowAfterLoan:d["monthNetCashFlow_"+mi]
+      });
+    }
+    summaryRows.push({Month:"TOTAL (12 months)", Revenue:d.totalRevenue12, VariableCosts:"", FixedCosts:"", LaborCost:"", TotalCosts:d.totalCost12, NetProfitLoss:d.cumulativeNet12, LoanPayment:d.totalLoanPayment12, NetCashFlowAfterLoan:d.cumulativeNetCashFlow12});
+    summaryRows.push({Month:"Cash In Hand Needed", Revenue:"", VariableCosts:"", FixedCosts:"", LaborCost:"", TotalCosts:"", NetProfitLoss:"", LoanPayment:"", NetCashFlowAfterLoan:d.cashInHandNeeded});
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), "MonthlySummary");
+    var metricsRows = [
+      {Line:"Total Fixed Monthly Costs (excl. labor)", Amount:d.totalFixedMonthly},
+      {Line:"Baseline Monthly Labor Cost", Amount:d.laborMonthlyCost},
+      {Line:"Avg. Net Operating Income / Month (12M plan)", Amount:d.netOperatingIncome},
+      {Line:"Break-Even Revenue / Day", Amount:d.breakEvenRevenueDay},
+      {Line:"Break-Even Revenue / Week", Amount:d.breakEvenRevenueWeek},
+      {Line:"Break-Even Revenue / Month", Amount:d.breakEvenRevenue},
+      {Line:"Break-Even Transactions / Day", Amount:d.breakEvenTxnDay},
+      {Line:"Break-Even Transactions / Week", Amount:d.breakEvenTxnWeek},
+      {Line:"Break-Even Transactions / Month", Amount:d.breakEvenTxnMonth},
+      {Line:"Owner's Equity", Amount:d.ownersEquity},
+      {Line:"Loan Monthly Payment", Amount:d.loanMonthlyPayment},
+      {Line:"Cash In Hand Needed", Amount:d.cashInHandNeeded}
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(metricsRows), "KeyMetrics");
+
+    return wb;
+  }
+
+  function exportToExcel(){
+    try{
+      var wb = buildWorkbook();
+      var arr = XLSX.write(wb, {bookType:"xlsx", type:"array"});
+      var blob = new Blob([arr], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      saveFile("Daawat_Cafe_Operating_Model.xlsx", blob);
+    }catch(err){
+      toast("Export failed: " + (err && err.message ? err.message : "unknown error"));
+    }
+  }
+
+  function saveFile(filename, blob){
+    if(window.claude && window.claude.use){
+      window.claude.use("downloads").then(function(downloads){
+        if(downloads){
+          downloads.save({filename:filename, data:blob}).then(function(){
+            toast("Saved " + filename);
+          }).catch(function(err){
+            if(err && err.code === "declined") return;
+            if(err && err.code === "rate_limited"){ toast("Please try again in a moment."); return; }
+            fallbackDownload(filename, blob);
+          });
+        } else {
+          fallbackDownload(filename, blob);
+        }
+      }).catch(function(){ fallbackDownload(filename, blob); });
+    } else {
+      fallbackDownload(filename, blob);
+    }
+  }
+  function fallbackDownload(filename, blob){
+    try{
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+      toast("Downloaded " + filename);
+    }catch(e2){
+      toast("Could not export the file in this view.");
+    }
+  }
+
+  // ---------------- Excel import ----------------
+  function sheetToArray(wb, name){
+    var ws = wb.Sheets[name];
+    if(!ws) return null;
+    return XLSX.utils.sheet_to_json(ws, {defval:""});
+  }
+
+  function importFromWorkbook(wb){
+    var next = defaultState();
+
+    var pre = sheetToArray(wb, "PreOpening");
+    if(pre){
+      next.preOpening = pre.map(function(r){
+        return {id:uid("pe"), label:String(r.Label||""), amount:Number(r.Amount)||0, note:String(r.Note||"")};
+      });
+    }
+
+    var mainRows = sheetToArray(wb, "FixedCosts_Main");
+    if(mainRows){
+      var map = {};
+      mainRows.forEach(function(r){ map[r.Field] = r.Value; });
+      // rent is calculated from the lease schedule, not imported
+      if("utilities.electricity" in map) next.fixed.utilities.electricity = Number(map["utilities.electricity"])||0;
+      if("utilities.gas" in map) next.fixed.utilities.gas = Number(map["utilities.gas"])||0;
+      if("utilities.water" in map) next.fixed.utilities.water = Number(map["utilities.water"])||0;
+      if("utilities.trash" in map) next.fixed.utilities.trash = Number(map["utilities.trash"])||0;
+      if("utilities.internet" in map) next.fixed.utilities.internet = Number(map["utilities.internet"])||0;
+      if("insurance" in map) next.fixed.insurance = Number(map["insurance"])||0;
+      if("labor.wage" in map) next.rev12.laborHourlyCost = Number(map["labor.wage"])||0;
+      if("officerSalary1" in map) next.fixed.officerSalary1 = Number(map["officerSalary1"])||0;
+      if("officerSalary2" in map) next.fixed.officerSalary2 = Number(map["officerSalary2"])||0;
+      if("officerSalary" in map && !("officerSalary1" in map)) next.fixed.officerSalary1 = Number(map["officerSalary"])||0;
+      if("software" in map) next.fixed.software = Number(map["software"])||0;
+    }
+
+    var openingRows = sheetToArray(wb, "PreOpening_Lease_Loan");
+    if(openingRows){
+      var omap = {};
+      openingRows.forEach(function(r){ omap[r.Field] = r.Value; });
+      if("grandOpeningDate" in omap) next.grandOpeningDate = String(omap["grandOpeningDate"]);
+      if("loan.amount" in omap) next.loan.amount = Number(omap["loan.amount"])||0;
+      if("loan.rate" in omap) next.loan.rate = Number(omap["loan.rate"])||0;
+      if("loan.termYears" in omap) next.loan.termYears = Number(omap["loan.termYears"])||0;
+    }
+
+    var rev12Rows = sheetToArray(wb, "Rev12_COGS");
+    if(rev12Rows){
+      var r12map = {};
+      rev12Rows.forEach(function(r){ r12map[r.Field] = r.Value; });
+      if("laborHourlyCost" in r12map) next.rev12.laborHourlyCost = Number(r12map["laborHourlyCost"])||0;
+      if("cogsIndustryPct" in r12map) next.rev12.cogsIndustryPct = Number(r12map["cogsIndustryPct"])||0;
+      if("cogsMethod" in r12map) next.rev12.cogsMethod = String(r12map["cogsMethod"])||"industry";
+      if("consumablesPct" in r12map) next.rev12.consumablesPct = Number(r12map["consumablesPct"])||0;
+      if("merchantFeePct" in r12map) next.rev12.merchantFeePct = Number(r12map["merchantFeePct"])||0;
+    }
+
+    var catMixRows = sheetToArray(wb, "MenuCategoryMix");
+    if(catMixRows && catMixRows.length){
+      next.categories = [];
+      next.menuCategories = {};
+      catMixRows.forEach(function(r){
+        var cat = String(r.Category||"");
+        if(!cat) return;
+        next.categories.push(cat);
+        next.menuCategories[cat] = {rawPct:Number(r.RawMaterialsPct)||0, salesPct:Number(r.PercentageOfSales)||0};
+      });
+    }
+
+    var hoursRows = sheetToArray(wb, "FixedCosts_Hours");
+    if(hoursRows && hoursRows.length){
+      next.fixed.hours = DAY_NAMES.map(function(dn){
+        var row = hoursRows.find(function(r){ return r.Day === dn; });
+        if(!row) return {open:"06:00", close:"19:00", closed:false};
+        return {open:String(row.Open||"06:00"), close:String(row.Close||"19:00"), closed: String(row.Closed).toUpperCase()==="TRUE"};
+      });
+    }
+
+    var otherRows = sheetToArray(wb, "FixedCosts_Other");
+    if(otherRows){
+      next.fixed.other = otherRows.map(function(r){ return {id:uid("fo"), label:String(r.Label||""), amount:Number(r.Amount)||0}; });
+    }
+
+    var monthlyRows = sheetToArray(wb, "MonthlyPlan");
+    if(monthlyRows && monthlyRows.length){
+      var revArr = next.monthly.revenue.slice();
+      var laborArr = next.monthly.laborHours.slice();
+      monthlyRows.forEach(function(r){
+        var match = String(r.Month||"").match(/(\d+)/);
+        var idx = match ? (parseInt(match[1],10)-1) : -1;
+        if(idx >= 0 && idx < 12){
+          revArr[idx] = Number(r.Revenue)||0;
+          laborArr[idx] = Number(r.LaborHoursPerWeek)||0;
+        }
+      });
+      next.monthly.revenue = revArr;
+      next.monthly.laborHours = laborArr;
+    }
+
+    var menuRows = sheetToArray(wb, "Menu");
+    if(menuRows){
+      next.menu = menuRows.map(function(r){
+        return {
+          id:uid("mi"), category:String(r.Category||"Other"), name:String(r.Item||r.Name||""),
+          price:Number(r.Price)||0, rawCost:Number(r.RawCost)||0, consumables:Number(r.Consumables)||0,
+          qty:Number(r.EstMonthlyQty)||0
+        };
+      });
+    }
+
+    state = next;
+    renderAll();
+    updateCalculatedFields();
+    saveLocal();
+    toast("Imported spreadsheet successfully.");
+  }
+
+  function handleImportFile(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = new Uint8Array(e.target.result);
+        var wb = XLSX.read(data, {type:"array"});
+        importFromWorkbook(wb);
+      }catch(err){
+        toast("Could not read that file — is it the exported .xlsx format?");
+      }
+    };
+    reader.onerror = function(){ toast("Could not read that file."); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  document.getElementById("btn-export").addEventListener("click", exportToExcel);
+  document.getElementById("btn-import").addEventListener("click", function(){
+    document.getElementById("import-file").click();
+  });
+  document.getElementById("import-file").addEventListener("change", function(e){
+    var file = e.target.files && e.target.files[0];
+    if(file) handleImportFile(file);
+    e.target.value = "";
+  });
+
+  // ---------------- boot ----------------
+  function start(hotData){
+    if(hotData && hotData.preOpening){
+      state = migrateState(hotData);
+    } else {
+      var local = loadLocal();
+      state = local || defaultState();
+    }
+    renderAll();
+    updateCalculatedFields();
+    try{
+      var savedTab = sessionStorage.getItem("daawat-active-tab");
+      if(savedTab && document.getElementById(savedTab)) switchTab(savedTab);
+    }catch(e){}
+  }
+
+  try{
+    if(window.claude && window.claude.hot && window.claude.hot.snapshot){
+      window.claude.hot.snapshot(function(){ return state; });
+    }
+    if(window.claude && window.claude.hot && window.claude.hot.ready){
+      window.claude.hot.ready(start);
+    } else {
+      start(window.claude && window.claude.hot ? window.claude.hot.data : null);
+    }
+  }catch(e){
+    start(null);
+  }
+})();
+</script>
+
+</body>
+</html>
